@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -13,7 +13,7 @@ import { Job, JobStatus } from "../types/job";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select } from "./ui/select";
-import { MoreHorizontal, ExternalLink, Edit2, Trash2 } from "lucide-react";
+import { ExternalLink, Edit2, Trash2 } from "lucide-react";
 
 interface JobTableProps {
   jobs: Job[];

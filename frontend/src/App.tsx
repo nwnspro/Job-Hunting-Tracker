@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { Job } from "./types/job";
-import { AddJobForm } from "./components/AddJobForm";
 import { useJobs } from "./hooks/useJobs";
 import { exportJobsToCSV } from "./utils/exportUtils";
 import { Header } from "./components/Header";
-import { Controls } from "./components/Controls";
 import { Content } from "./components/Content";
 import { Loading } from "./components/Loading";
 

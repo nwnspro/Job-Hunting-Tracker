@@ -99,7 +99,7 @@ export function Content({
 
   if (viewMode === "table") {
     return (
-      <div className="w-[1241px] h-[500px] bg-white rounded-[20px] shadow-[0px_24px_80px_-40px_rgba(0,0,0,0.25)] relative">
+      <div className="w-[1260px] h-[530px] bg-white rounded-[20px] shadow-[0px_24px_80px_-40px_rgba(0,0,0,0.25)] relative">
         {/* Company Search Bar */}
         <div className="p-4 border-b border-gray-200">
           <div className="relative w-full max-w-md">
