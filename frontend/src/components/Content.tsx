@@ -36,6 +36,7 @@ export function Content({
     id: string;
     field: string;
   } | null>(null);
+  const [editingRow, setEditingRow] = useState<string | null>(null);
   const [showSadFace, setShowSadFace] = useState(false);
 
   // Search functionality
@@ -73,18 +74,9 @@ export function Content({
     return sorted;
   }, [filteredJobs, sortColumn, sortDirection]);
 
-  // Format date based on status
-  const formatDate = (date: string, status: string) => {
-    const baseDate = "2025.01.01";
-    if (
-      status === "Applied" ||
-      status === "Interview Scheduled" ||
-      status === "No Response"
-    ) {
-      return baseDate + "-";
-    } else {
-      return baseDate + "-2025.01.02";
-    }
+  // Format date - only show application date
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString("en-CA"); // Returns YYYY-MM-DD format
   };
 
   // Handle cell editing
@@ -101,44 +93,52 @@ export function Content({
     return (
       <div className="w-[1260px] h-[530px] bg-white rounded-[20px] shadow-[0px_24px_80px_-40px_rgba(0,0,0,0.25)] relative">
         {/* Company Search Bar */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="relative w-full max-w-md">
-            <input
-              type="text"
-              placeholder={
-                filteredJobs.length === 0 && searchQuery
-                  ? "No records"
-                  : "Search company name..."
-              }
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 px-4 py-2 pl-10 border border-gray-200 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="relative w-full flex items-center">
+            {/* Search Icon */}
+            <div className="flex-shrink-0 mr-3">
               {showSadFace ? (
-                <Frown className="w-4 h-4 text-red-500" />
+                <Frown className="w-4 h-4  text-gray-400" />
               ) : (
                 <Search className="w-4 h-4 text-gray-400" />
               )}
             </div>
+
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder={
+                  filteredJobs.length === 0 && searchQuery
+                    ? "No records"
+                    : "Looking for anything?"
+                }
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-8 px-0 py-1 bg-transparent text-black placeholder-gray-500  focus:outline-none "
+              />
+            </div>
+
+            {/* Add and Share Icons */}
+            <div className="flex-shrink-0 ml-1 flex items-center gap-2">
+              <button
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                onClick={() => setShowAddForm(!showAddForm)}
+              >
+                <Plus className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              </button>
+              <button className="p-1 hover:bg-gray-100 rounded transition-colors">
+                <Share2 className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Add Job Form */}
-        {showAddForm && (
-          <div className="p-4 border-b border-gray-200">
-            <AddJobForm
-              onAddJob={onAddJob}
-              onCancel={() => setShowAddForm(false)}
-            />
-          </div>
-        )}
-
         {/* Table */}
-        <div className="h-[calc(100%-74px)]">
-          {/* Table Header */}
-          <div className="bg-gray-100 border-b border-gray-200">
-            <div className="grid grid-cols-6 gap-0">
+        <div className="flex flex-col h-[calc(100%-61px)]">
+          {/* Table Header - Fixed */}
+          <div className="bg-gray-100 border-b border-gray-200 flex-shrink-0">
+            <div className="grid grid-cols-[150px_200px_200px_180px_1fr] gap-0">
               <button
                 onClick={() => {
                   setSortColumn("date");
@@ -166,49 +166,228 @@ export function Content({
                 {sortColumn === "status" &&
                   (sortDirection === "asc" ? "↑" : "↓")}
               </button>
-              <div className="p-3 font-medium text-gray-700 border-r border-gray-200">
-                Notes
-              </div>
-              <div className="p-3 font-medium text-gray-700">Actions</div>
+              <div className="p-3 font-medium text-gray-700">Notes</div>
             </div>
           </div>
 
-          {/* Table Body */}
-          <div className="overflow-y-auto h-[calc(100%-52px)]">
-            {sortedJobs.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <div className="w-8 h-8 bg-gray-300 rounded"></div>
+          {/* Table Body - Conditional Scrollable */}
+          <div
+            className={`flex-1 min-h-0 ${
+              sortedJobs.length > 10 ? "overflow-y-auto" : "overflow-y-hidden"
+            }`}
+          >
+            {/* Add Job Form Row */}
+            {showAddForm && (
+              <div className="grid grid-cols-[150px_200px_200px_180px_1fr] gap-0 border-b border-gray-200 bg-blue-50 p-2">
+                {/* Date Input */}
+                <div className="p-2 border-r border-gray-100">
+                  <input
+                    type="date"
+                    defaultValue={new Date().toISOString().split("T")[0]}
+                    className="w-full h-8 px-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    id="add-date"
+                  />
                 </div>
-                <p className="text-lg font-medium">No job applications found</p>
-                <p className="text-sm">Try searching for a different company</p>
+
+                {/* Company Input */}
+                <div className="p-2 border-r border-gray-100">
+                  <input
+                    type="text"
+                    placeholder="Company name"
+                    className="w-full h-8 px-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    id="add-company"
+                  />
+                </div>
+
+                {/* Job Input */}
+                <div className="p-2 border-r border-gray-100">
+                  <input
+                    type="text"
+                    placeholder="Job title"
+                    className="w-full h-8 px-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    id="add-position"
+                  />
+                </div>
+
+                {/* Status Select */}
+                <div className="p-2 border-r border-gray-100">
+                  <select
+                    defaultValue="Applied"
+                    className="w-full h-8 px-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    id="add-status"
+                  >
+                    <option value="Applied">Applied</option>
+                    <option value="Interview Scheduled">
+                      Interview Scheduled
+                    </option>
+                    <option value="Interview Completed">
+                      Interview Completed
+                    </option>
+                    <option value="Offer Received">Offer Received</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Withdrawn">Withdrawn</option>
+                    <option value="No Response">No Response</option>
+                  </select>
+                </div>
+
+                {/* Notes Input with Action Buttons */}
+                <div className="p-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Add notes..."
+                    className="flex-1 h-8 px-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    id="add-notes"
+                  />
+                  <button
+                    onClick={() => {
+                      const dateEl = document.getElementById(
+                        "add-date"
+                      ) as HTMLInputElement;
+                      const companyEl = document.getElementById(
+                        "add-company"
+                      ) as HTMLInputElement;
+                      const positionEl = document.getElementById(
+                        "add-position"
+                      ) as HTMLInputElement;
+                      const statusEl = document.getElementById(
+                        "add-status"
+                      ) as HTMLSelectElement;
+                      const notesEl = document.getElementById(
+                        "add-notes"
+                      ) as HTMLInputElement;
+
+                      if (companyEl.value && positionEl.value) {
+                        onAddJob({
+                          company: companyEl.value,
+                          position: positionEl.value,
+                          status: statusEl.value as any,
+                          notes: notesEl.value,
+                          appliedDate: dateEl.value,
+                          salary: "",
+                          location: "",
+                          url: "",
+                        });
+                        setShowAddForm(false);
+                      }
+                    }}
+                    className="w-6 h-6 bg-green-100 rounded flex items-center justify-center hover:bg-green-200 transition-colors"
+                    title="Save"
+                  >
+                    <div className="w-3 h-3 bg-green-600 rounded-sm"></div>
+                  </button>
+                  <button
+                    onClick={() => setShowAddForm(false)}
+                    className="w-6 h-6 bg-red-100 rounded flex items-center justify-center hover:bg-red-200 transition-colors"
+                    title="Cancel"
+                  >
+                    <div className="w-3 h-3 bg-red-400 rounded-sm"></div>
+                  </button>
+                </div>
               </div>
-            ) : (
-              sortedJobs.map((job, index) => (
+            )}
+
+            {/* Render Jobs */}
+            <div className="min-h-full">
+              {sortedJobs.map((job, index) => (
                 <div
                   key={job.id}
-                  className={`grid grid-cols-6 gap-0 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    index === 0
-                      ? "bg-blue-50"
-                      : index % 2 === 0
-                      ? "bg-white"
-                      : "bg-gray-50"
+                  className={`grid grid-cols-[150px_200px_200px_180px_1fr] gap-0 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
                   }`}
                 >
-                  <div className="p-3 border-r border-gray-100 text-gray-600 text-sm">
-                    {formatDate(job.appliedDate, job.status)}
-                  </div>
-                  <div className="p-3 border-r border-gray-100 text-gray-800">
-                    {job.company}
-                  </div>
-                  <div className="p-3 border-r border-gray-100 text-gray-800">
-                    {job.position}
-                  </div>
+                  {/* Date Field */}
                   <div
-                    className="p-3 border-r border-gray-100 cursor-pointer"
-                    onClick={() => handleCellClick(job.id, "status")}
+                    className={`p-3 border-r border-gray-100 ${
+                      editingRow === job.id ? "cursor-pointer" : ""
+                    }`}
+                    onClick={() =>
+                      editingRow === job.id && handleCellClick(job.id, "date")
+                    }
                   >
-                    {editingCell?.id === job.id &&
+                    {editingRow === job.id &&
+                    editingCell?.id === job.id &&
+                    editingCell?.field === "date" ? (
+                      <input
+                        type="date"
+                        value={job.appliedDate}
+                        onChange={(e) =>
+                          handleCellEdit(job.id, "appliedDate", e.target.value)
+                        }
+                        className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="text-gray-600 text-sm">
+                        {formatDate(job.appliedDate)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Company Field */}
+                  <div
+                    className={`p-3 border-r border-gray-100 ${
+                      editingRow === job.id ? "cursor-pointer" : ""
+                    }`}
+                    onClick={() =>
+                      editingRow === job.id &&
+                      handleCellClick(job.id, "company")
+                    }
+                  >
+                    {editingRow === job.id &&
+                    editingCell?.id === job.id &&
+                    editingCell?.field === "company" ? (
+                      <input
+                        type="text"
+                        value={job.company}
+                        onChange={(e) =>
+                          handleCellEdit(job.id, "company", e.target.value)
+                        }
+                        className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="text-gray-800">{job.company}</span>
+                    )}
+                  </div>
+
+                  {/* Position Field */}
+                  <div
+                    className={`p-3 border-r border-gray-100 ${
+                      editingRow === job.id ? "cursor-pointer" : ""
+                    }`}
+                    onClick={() =>
+                      editingRow === job.id &&
+                      handleCellClick(job.id, "position")
+                    }
+                  >
+                    {editingRow === job.id &&
+                    editingCell?.id === job.id &&
+                    editingCell?.field === "position" ? (
+                      <input
+                        type="text"
+                        value={job.position}
+                        onChange={(e) =>
+                          handleCellEdit(job.id, "position", e.target.value)
+                        }
+                        className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="text-gray-800">{job.position}</span>
+                    )}
+                  </div>
+
+                  {/* Status Field */}
+                  <div
+                    className={`p-3 border-r border-gray-100 ${
+                      editingRow === job.id ? "cursor-pointer" : ""
+                    }`}
+                    onClick={() =>
+                      editingRow === job.id && handleCellClick(job.id, "status")
+                    }
+                  >
+                    {editingRow === job.id &&
+                    editingCell?.id === job.id &&
                     editingCell?.field === "status" ? (
                       <select
                         value={job.status}
@@ -252,44 +431,132 @@ export function Content({
                       </span>
                     )}
                   </div>
-                  <div
-                    className="p-3 border-r border-gray-100 cursor-pointer"
-                    onClick={() => handleCellClick(job.id, "notes")}
-                  >
-                    {editingCell?.id === job.id &&
-                    editingCell?.field === "notes" ? (
-                      <input
-                        type="text"
-                        value={job.notes || ""}
-                        onChange={(e) =>
-                          handleCellEdit(job.id, "notes", e.target.value)
-                        }
-                        className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        autoFocus
-                      />
-                    ) : (
-                      <span className="text-gray-600 text-sm">
-                        {job.notes || "Add notes..."}
-                      </span>
-                    )}
-                  </div>
+
+                  {/* Notes Field with Action Buttons */}
                   <div className="p-3 flex items-center gap-2">
-                    <button
-                      onClick={() => onUpdateJob(job.id, { status: "Applied" })}
-                      className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200 transition-colors"
+                    <div
+                      className={`flex-1 ${
+                        editingRow === job.id ? "cursor-pointer" : ""
+                      }`}
+                      onClick={() =>
+                        editingRow === job.id &&
+                        handleCellClick(job.id, "notes")
+                      }
                     >
-                      <div className="w-3 h-3 bg-gray-400 rounded-sm"></div>
+                      {editingRow === job.id &&
+                      editingCell?.id === job.id &&
+                      editingCell?.field === "notes" ? (
+                        <input
+                          type="text"
+                          value={job.notes || ""}
+                          onChange={(e) =>
+                            handleCellEdit(job.id, "notes", e.target.value)
+                          }
+                          className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="text-gray-600 text-sm">
+                          {job.notes || "Add notes..."}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <button
+                      onClick={() => {
+                        // Toggle edit mode for the entire row
+                        if (editingRow === job.id) {
+                          setEditingRow(null);
+                          setEditingCell(null);
+                        } else {
+                          setEditingRow(job.id);
+                          setEditingCell(null);
+                        }
+                      }}
+                      className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
+                        editingRow === job.id
+                          ? "bg-green-100 hover:bg-green-200"
+                          : "bg-gray-100 hover:bg-gray-200"
+                      }`}
+                      title={editingRow === job.id ? "Exit Edit" : "Edit"}
+                    >
+                      <div
+                        className={`w-3 h-3 rounded-sm ${
+                          editingRow === job.id ? "bg-green-600" : "bg-gray-400"
+                        }`}
+                      ></div>
                     </button>
                     <button
                       onClick={() => onDeleteJob(job.id)}
                       className="w-6 h-6 bg-red-100 rounded flex items-center justify-center hover:bg-red-200 transition-colors"
+                      title="Delete"
                     >
                       <div className="w-3 h-3 bg-red-400 rounded-sm"></div>
                     </button>
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+
+              {/* Empty state when no jobs */}
+              {sortedJobs.length === 0 && (
+                <div className="flex-1 flex items-center justify-center text-gray-500 min-h-[300px]">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                    </div>
+                    <p className="text-lg font-medium">
+                      No job applications found
+                    </p>
+                    <p className="text-sm">
+                      Try searching for a different company
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Add empty rows to fill space only when not scrolling */}
+              {sortedJobs.length <= 10 &&
+                Array.from({
+                  length: Math.max(10 - sortedJobs.length, 0),
+                }).map((_, index) => (
+                  <div
+                    key={`empty-${index}`}
+                    className={`grid grid-cols-[150px_200px_200px_180px_1fr] gap-0 border-b border-gray-100 h-12 ${
+                      (sortedJobs.length + index) % 2 === 0
+                        ? "bg-white"
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3"></div>
+                  </div>
+                ))}
+
+              {/* Add extra scrollable content when there are many jobs */}
+              {sortedJobs.length > 10 &&
+                Array.from({
+                  length: 5,
+                }).map((_, index) => (
+                  <div
+                    key={`extra-${index}`}
+                    className={`grid grid-cols-[150px_200px_200px_180px_1fr] gap-0 border-b border-gray-100 h-12 ${
+                      (sortedJobs.length + index) % 2 === 0
+                        ? "bg-white"
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3 border-r border-gray-100"></div>
+                    <div className="p-3"></div>
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
       </div>
