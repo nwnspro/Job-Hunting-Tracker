@@ -564,7 +564,7 @@ export function Content({
   }
 
   return (
-    <div className="w-[1241px] h-[500px] bg-white rounded-[20px] shadow-[0px_24px_80px_-40px_rgba(0,0,0,0.25)] p-6">
+    <div className="w-[1260px] h-[530px] bg-white rounded-[20px] shadow-[0px_24px_80px_-40px_rgba(0,0,0,0.25)] overflow-hidden">
       {stats && <JobStatsComponent stats={stats} />}
     </div>
   );
