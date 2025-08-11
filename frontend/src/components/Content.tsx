@@ -12,7 +12,12 @@ interface ContentProps {
   stats: any;
   onUpdateJob: (id: string, updates: Partial<Job>) => void;
   onDeleteJob: (id: string) => void;
-  onAddJob: (jobData: Omit<Job, "id" | "lastUpdated">) => void;
+  onAddJob: (
+    jobData: Omit<
+      Job,
+      "id" | "lastUpdated" | "statusHistory" | "lastStatusDate"
+    >
+  ) => void;
   onExport: () => void;
   showAddForm: boolean;
   setShowAddForm: (show: boolean) => void;
@@ -60,8 +65,8 @@ export function Content({
   const sortedJobs = useMemo(() => {
     const sorted = [...filteredJobs].sort((a, b) => {
       if (sortColumn === "date") {
-        const dateA = new Date(a.appliedDate);
-        const dateB = new Date(b.appliedDate);
+        const dateA = new Date(a.lastStatusDate);
+        const dateB = new Date(b.lastStatusDate);
         return sortDirection === "asc"
           ? dateA.getTime() - dateB.getTime()
           : dateB.getTime() - dateA.getTime();
@@ -76,7 +81,14 @@ export function Content({
 
   // Format date - only show application date
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-CA"); // Returns YYYY-MM-DD format
+    if (!date) return "";
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return date; // Return original if invalid
+      return dateObj.toISOString().split("T")[0]; // Returns YYYY-MM-DD format
+    } catch (error) {
+      return date; // Return original string if parsing fails
+    }
   };
 
   // Handle cell editing
@@ -217,16 +229,9 @@ export function Content({
                     id="add-status"
                   >
                     <option value="Applied">Applied</option>
-                    <option value="Interview Scheduled">
-                      Interview Scheduled
-                    </option>
-                    <option value="Interview Completed">
-                      Interview Completed
-                    </option>
-                    <option value="Offer Received">Offer Received</option>
+                    <option value="Interviewing">Interviewing</option>
                     <option value="Rejected">Rejected</option>
-                    <option value="Withdrawn">Withdrawn</option>
-                    <option value="No Response">No Response</option>
+                    <option value="Offer">Offer</option>
                   </select>
                 </div>
 
@@ -309,16 +314,20 @@ export function Content({
                     editingCell?.field === "date" ? (
                       <input
                         type="date"
-                        value={job.appliedDate}
+                        value={job.lastStatusDate}
                         onChange={(e) =>
-                          handleCellEdit(job.id, "appliedDate", e.target.value)
+                          handleCellEdit(
+                            job.id,
+                            "lastStatusDate",
+                            e.target.value
+                          )
                         }
                         className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                         autoFocus
                       />
                     ) : (
                       <span className="text-gray-600 text-sm">
-                        {formatDate(job.appliedDate)}
+                        {formatDate(job.lastStatusDate)}
                       </span>
                     )}
                   </div>
@@ -377,74 +386,85 @@ export function Content({
                     )}
                   </div>
 
-                  {/* Status Field */}
-                  <div
-                    className={`p-3 border-r border-gray-100 ${
-                      editingRow === job.id ? "cursor-pointer" : ""
-                    }`}
-                    onClick={() =>
-                      editingRow === job.id && handleCellClick(job.id, "status")
-                    }
-                  >
-                    {editingRow === job.id &&
-                    editingCell?.id === job.id &&
+                  {/* Status Field - Custom dropdown */}
+                  <div className="p-3 border-r border-gray-100 relative">
+                    {editingCell?.id === job.id &&
                     editingCell?.field === "status" ? (
-                      <select
-                        value={job.status}
-                        onChange={(e) =>
-                          handleCellEdit(job.id, "status", e.target.value)
-                        }
-                        className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        autoFocus
-                      >
-                        <option value="Applied">Applied</option>
-                        <option value="Interview Scheduled">
-                          Interview Scheduled
-                        </option>
-                        <option value="Interview Completed">
-                          Interview Completed
-                        </option>
-                        <option value="Offer Received">Offer Received</option>
-                        <option value="Rejected">Rejected</option>
-                        <option value="Withdrawn">Withdrawn</option>
-                        <option value="No Response">No Response</option>
-                      </select>
+                      <div className="relative">
+                        {/* Custom Status Dropdown */}
+                        <div className="absolute top-0 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                          {[
+                            {
+                              value: "Applied",
+                              color: "bg-blue-100 text-blue-800",
+                            },
+                            {
+                              value: "Interviewing",
+                              color: "bg-yellow-100 text-yellow-800",
+                            },
+                            {
+                              value: "Rejected",
+                              color: "bg-red-100 text-red-800",
+                            },
+                            {
+                              value: "Offer",
+                              color: "bg-green-100 text-green-800",
+                            },
+                          ].map((status) => (
+                            <div
+                              key={status.value}
+                              onClick={() => {
+                                handleCellEdit(job.id, "status", status.value);
+                                setEditingCell(null);
+                              }}
+                              className={`px-3 py-2 cursor-pointer hover:bg-gray-50 flex items-center ${
+                                job.status === status.value ? "bg-gray-50" : ""
+                              }`}
+                            >
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}
+                              >
+                                {status.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Backdrop to close dropdown */}
+                        <div
+                          className="fixed inset-0 z-5"
+                          onClick={() => setEditingCell(null)}
+                        />
+                      </div>
                     ) : (
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          job.status === "Applied"
-                            ? "bg-blue-100 text-blue-800"
-                            : job.status === "Interview Scheduled"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : job.status === "Interview Completed"
-                            ? "bg-purple-100 text-purple-800"
-                            : job.status === "Offer Received"
-                            ? "bg-green-100 text-green-800"
-                            : job.status === "Rejected"
-                            ? "bg-red-100 text-red-800"
-                            : job.status === "Withdrawn"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-orange-100 text-orange-800"
-                        }`}
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => handleCellClick(job.id, "status")}
                       >
-                        {job.status}
-                      </span>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${
+                            job.status === "Applied"
+                              ? "bg-blue-100 text-blue-800"
+                              : job.status === "Interviewing"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : job.status === "Rejected"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800" // Offer
+                          }`}
+                        >
+                          {job.status}
+                        </span>
+                      </div>
                     )}
                   </div>
 
-                  {/* Notes Field with Action Buttons */}
+                  {/* Notes Field with Action Buttons - Clean edit style */}
                   <div className="p-3 flex items-center gap-2">
                     <div
-                      className={`flex-1 ${
-                        editingRow === job.id ? "cursor-pointer" : ""
-                      }`}
-                      onClick={() =>
-                        editingRow === job.id &&
-                        handleCellClick(job.id, "notes")
-                      }
+                      className="flex-1 cursor-pointer"
+                      onClick={() => handleCellClick(job.id, "notes")}
                     >
-                      {editingRow === job.id &&
-                      editingCell?.id === job.id &&
+                      {editingCell?.id === job.id &&
                       editingCell?.field === "notes" ? (
                         <input
                           type="text"
@@ -452,11 +472,13 @@ export function Content({
                           onChange={(e) =>
                             handleCellEdit(job.id, "notes", e.target.value)
                           }
-                          className="w-full p-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          onBlur={() => setEditingCell(null)}
+                          className="w-full px-0 py-1 bg-transparent text-gray-800 text-sm border-0 border-b border-gray-300 focus:outline-none focus:border-gray-500 focus:ring-0"
+                          placeholder="Add notes..."
                           autoFocus
                         />
                       ) : (
-                        <span className="text-gray-600 text-sm">
+                        <span className="text-gray-600 text-sm hover:text-gray-800 transition-colors border-b border-transparent hover:border-gray-200 py-1">
                           {job.notes || "Add notes..."}
                         </span>
                       )}
@@ -565,7 +587,7 @@ export function Content({
 
   return (
     <div className="w-[1260px] h-[530px] bg-white rounded-[20px] shadow-[0px_24px_80px_-40px_rgba(0,0,0,0.25)] overflow-hidden">
-      {stats && <JobStatsComponent stats={stats} />}
+      {stats && <JobStatsComponent stats={stats} jobs={jobs} />}
     </div>
   );
 }

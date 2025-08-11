@@ -15,8 +15,6 @@ const statusOptions: JobStatus[] = [
   "Interview Completed",
   "Offer Received",
   "Rejected",
-  "Withdrawn",
-  "No Response",
 ];
 
 export function AddJobForm({ onAddJob, onCancel }: AddJobFormProps) {

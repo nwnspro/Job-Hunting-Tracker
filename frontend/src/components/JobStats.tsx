@@ -1,24 +1,30 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal } from "d3-sankey";
-import { JobStats } from "../types/job";
 
 interface JobStatsProps {
-  stats: JobStats;
+  stats: any;
+  jobs?: any[]; // Add jobs data to analyze status history
 }
 
 interface SankeyNode {
   name: string;
   id: number;
+  value?: number;
+  x0?: number;
+  x1?: number;
+  y0?: number;
+  y1?: number;
 }
 
 interface SankeyLink {
   source: number;
   target: number;
   value: number;
+  width?: number;
 }
 
-export function JobStatsComponent({ stats }: JobStatsProps) {
+export function JobStatsComponent({ stats, jobs = [] }: JobStatsProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -28,45 +34,113 @@ export function JobStatsComponent({ stats }: JobStatsProps) {
     d3.select(svgRef.current).selectAll("*").remove();
 
     // Calculate container dimensions for Sankey
-    const width = 1100; // Container width minus padding
-    const height = 280; // Height for sankey section (larger)
+    const width = 1100;
+    const height = 280;
 
-    // Create nodes representing job application stages
-    const nodes: SankeyNode[] = [
-      { name: "Applications", id: 0 },
-      { name: "Applied", id: 1 },
-      { name: "Interview Scheduled", id: 2 },
-      { name: "Interview Completed", id: 3 },
-      { name: "Offer Received", id: 4 },
-      { name: "Rejected", id: 5 },
-      { name: "Withdrawn", id: 6 },
-      { name: "No Response", id: 7 },
+    // Analyze job flows from status history
+    const analyzeJobFlows = () => {
+      let appliedCount = jobs.length;
+      let interviewedCount = 0;
+      let rejectedAfterInterview = 0;
+      let rejectedAfterApply = 0;
+      let offersCount = 0;
+      let noReplyAfterApply = 0;
+      let noReplyAfterInterview = 0;
+
+      jobs.forEach((job) => {
+        const history = job.statusHistory || [];
+        const hasInterviewed = history.some(
+          (entry: any) => entry.status === "Interviewing"
+        );
+
+        if (job.status === "Rejected") {
+          if (hasInterviewed) {
+            rejectedAfterInterview++;
+          } else {
+            rejectedAfterApply++;
+          }
+        } else if (job.status === "Offer") {
+          offersCount++;
+        } else if (job.status === "Interviewing") {
+          interviewedCount++;
+          // Current interviewing jobs are "No Reply" in Sankey terms
+          noReplyAfterInterview++;
+        } else if (job.status === "Applied") {
+          // Applied jobs that haven't moved forward are "No Reply"
+          noReplyAfterApply++;
+        }
+      });
+
+      return {
+        appliedCount,
+        interviewedCount:
+          interviewedCount + rejectedAfterInterview + offersCount,
+        rejectedAfterInterview,
+        rejectedAfterApply,
+        offersCount,
+        noReplyAfterApply,
+        noReplyAfterInterview,
+      };
+    };
+
+    const flows = analyzeJobFlows();
+
+    // Only create nodes that have data
+    const allNodes = [
+      { name: "Applied", id: 0, value: flows.appliedCount },
+      { name: "Interviewed", id: 1, value: flows.interviewedCount },
+      { name: "Offers", id: 2, value: flows.offersCount },
+      {
+        name: "Rejected",
+        id: 3,
+        value: flows.rejectedAfterInterview + flows.rejectedAfterApply,
+      },
+      {
+        name: "No Reply",
+        id: 4,
+        value: flows.noReplyAfterApply + flows.noReplyAfterInterview,
+      },
     ];
 
-    // Create links representing the flow between stages
-    const totalApps = stats.total || 5;
-    const applied = stats.applied || 2;
-    const interviewing = stats.interviewing || 1;
-    const offered = stats.offered || 1;
-    const rejected = stats.rejected || 1;
+    // Filter out nodes with 0 value
+    const nodes: SankeyNode[] = allNodes.filter((node) => node.value > 0);
 
-    const links: SankeyLink[] = [
-      { source: 0, target: 1, value: applied },
-      { source: 1, target: 2, value: interviewing },
-      { source: 2, target: 3, value: Math.max(interviewing, 1) },
-      { source: 3, target: 4, value: offered },
-      { source: 1, target: 5, value: Math.max(rejected, 1) },
-      { source: 2, target: 5, value: Math.max(1, Math.floor(rejected * 0.3)) },
-      { source: 1, target: 6, value: Math.max(1, Math.floor(applied * 0.1)) },
-      {
-        source: 1,
-        target: 7,
-        value: Math.max(
-          1,
-          totalApps - applied - interviewing - offered - rejected
-        ),
-      },
-    ].filter((link) => link.value > 0);
+    // Create a mapping from old IDs to new IDs
+    const idMapping: { [key: number]: number } = {};
+    nodes.forEach((node, index) => {
+      idMapping[node.id] = index;
+      node.id = index;
+    });
+
+    // Create links based on actual job flows, only if both source and target nodes exist
+    const allLinks = [
+      // From Applied to Interviewed
+      { source: 0, target: 1, value: flows.interviewedCount },
+      // From Applied to No Reply (direct)
+      { source: 0, target: 4, value: flows.noReplyAfterApply },
+      // From Applied to Rejected (direct)
+      { source: 0, target: 3, value: flows.rejectedAfterApply },
+      // From Interviewed to Offers
+      { source: 1, target: 2, value: flows.offersCount },
+      // From Interviewed to Rejected
+      { source: 1, target: 3, value: flows.rejectedAfterInterview },
+      // From Interviewed to No Reply
+      { source: 1, target: 4, value: flows.noReplyAfterInterview },
+    ];
+
+    // Filter links: only include if value > 0 and both source and target nodes exist
+    const links: SankeyLink[] = allLinks
+      .filter(
+        (link) =>
+          link.value > 0 &&
+          nodes.some((n) => n.id === idMapping[link.source]) &&
+          nodes.some((n) => n.id === idMapping[link.target])
+      )
+      .map((link) => ({
+        source: idMapping[link.source],
+        target: idMapping[link.target],
+        value: link.value,
+      }));
 
     // Create sankey generator
     const margin = { top: 20, right: 30, bottom: 30, left: 30 };
@@ -93,19 +167,16 @@ export function JobStatsComponent({ stats }: JobStatsProps) {
       .style("max-width", "100%")
       .style("height", "auto");
 
-    // Color scheme
+    // Color scheme - map by node name instead of index
     const colorScale = d3
       .scaleOrdinal()
-      .domain(nodes.map((d) => d.name))
+      .domain(["Applied", "Interviewed", "Offers", "Rejected", "No Reply"])
       .range([
-        "#e3f2fd", // Applications - light blue
         "#2196f3", // Applied - blue
-        "#ff9800", // Interview Scheduled - orange
-        "#9c27b0", // Interview Completed - purple
-        "#4caf50", // Offer Received - green
+        "#ff9800", // Interviewed - orange
+        "#4caf50", // Offers - green
         "#f44336", // Rejected - red
-        "#757575", // Withdrawn - gray
-        "#ffc107", // No Response - yellow
+        "#ffc107", // No Reply - yellow
       ]);
 
     // Add links
@@ -149,7 +220,7 @@ export function JobStatsComponent({ stats }: JobStatsProps) {
       .style("font", "11px 'Onest', sans-serif")
       .style("fill", "#333")
       .text((d) => `${d.name} (${d.value || 0})`);
-  }, [stats]);
+  }, [stats, jobs]);
 
   return (
     <div className="h-full p-6 flex flex-col">
@@ -159,21 +230,21 @@ export function JobStatsComponent({ stats }: JobStatsProps) {
           <div className="text-xl font-bold text-blue-600">
             {stats.total || 0}
           </div>
-          <div className="text-xs text-blue-600">Total Applications</div>
+          <div className="text-xs text-blue-600">Applied</div>
         </div>
 
         <div className="bg-yellow-50 p-3 rounded-lg border">
           <div className="text-xl font-bold text-yellow-600">
-            {stats.applied || 0}
+            {stats.inProgress || 0}
           </div>
-          <div className="text-xs text-yellow-600">Applied</div>
+          <div className="text-xs text-yellow-600">In Progress</div>
         </div>
 
-        <div className="bg-purple-50 p-3 rounded-lg border">
-          <div className="text-xl font-bold text-purple-600">
-            {stats.interviewing || 0}
+        <div className="bg-red-50 p-3 rounded-lg border">
+          <div className="text-xl font-bold text-red-600">
+            {stats.rejected || 0}
           </div>
-          <div className="text-xs text-purple-600">Interviewing</div>
+          <div className="text-xs text-red-600">Rejected</div>
         </div>
 
         <div className="bg-green-50 p-3 rounded-lg border">
