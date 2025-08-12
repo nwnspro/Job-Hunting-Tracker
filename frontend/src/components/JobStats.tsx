@@ -33,7 +33,7 @@ export function JobStatsComponent({ stats, jobs = [] }: JobStatsProps) {
   useEffect(() => {
     if (!svgRef.current) return;
 
-    // 设置SVG元素引用
+    // Set SVG element reference
     setSvgElement(svgRef.current);
 
     // Clear previous content

@@ -6,21 +6,21 @@ class ExportController {
     this.sheets = google.sheets({ version: "v4" });
   }
 
-  // 导出到Google Sheets
+  // Export to Google Sheets
   async exportToGoogleSheets(req, res) {
     try {
       const { data } = req.body;
-      const userId = req.user.id; // 从认证中间件获取用户ID
+      const userId = req.user.id; // Get user ID from authentication middleware
 
       if (!data || !Array.isArray(data)) {
-        return res.status(400).json({ error: "无效的数据格式" });
+        return res.status(400).json({ error: "Invalid data format" });
       }
 
-      // 配置Google Sheets API认证
+      // Configure Google Sheets API authentication
       let auth;
 
       if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-        // 使用环境变量方式认证
+        // Use environment variables for authentication
         auth = new google.auth.GoogleAuth({
           credentials: {
             client_email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -29,19 +29,21 @@ class ExportController {
           scopes: ["https://www.googleapis.com/auth/spreadsheets"],
         });
       } else if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE) {
-        // 使用密钥文件方式认证
+        // Use key file for authentication
         auth = new google.auth.GoogleAuth({
           keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE,
           scopes: ["https://www.googleapis.com/auth/spreadsheets"],
         });
       } else {
-        throw new Error("Google Sheets API认证配置缺失");
+        throw new Error(
+          "Google Sheets API authentication configuration missing"
+        );
       }
 
       const authClient = await auth.getClient();
       google.options({ auth: authClient });
 
-      // 创建新的Google Sheets文档
+      // Create new Google Sheets document
       const spreadsheet = await this.sheets.spreadsheets.create({
         requestBody: {
           properties: {
@@ -54,9 +56,9 @@ class ExportController {
 
       const spreadsheetId = spreadsheet.data.spreadsheetId;
 
-      // 准备数据
+      // Prepare data
       const values = [
-        ["Date", "Company", "Job", "Status", "Notes", "URL"], // 头部
+        ["Date", "Company", "Job", "Status", "Notes", "URL"], // Headers
         ...data.map((job) => [
           job.date,
           job.company,
@@ -67,7 +69,7 @@ class ExportController {
         ]),
       ];
 
-      // 写入数据到Google Sheets
+      // Write data to Google Sheets
       await this.sheets.spreadsheets.values.update({
         spreadsheetId,
         range: "A1:F" + values.length,
@@ -77,7 +79,7 @@ class ExportController {
         },
       });
 
-      // 格式化表格
+      // Format table
       await this.sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         requestBody: {
@@ -129,27 +131,27 @@ class ExportController {
       res.json({
         success: true,
         sheetUrl,
-        message: "数据已成功导出到Google Sheets",
+        message: "Data successfully exported to Google Sheets",
       });
     } catch (error) {
-      console.error("Google Sheets导出错误:", error);
+      console.error("Google Sheets export error:", error);
       res.status(500).json({
-        error: "导出到Google Sheets失败",
+        error: "Failed to export to Google Sheets",
         message: error.message,
       });
     }
   }
 
-  // 导出为CSV（备用方案）
+  // Export as CSV (backup option)
   exportToCSV(req, res) {
     try {
       const { data } = req.body;
 
       if (!data || !Array.isArray(data)) {
-        return res.status(400).json({ error: "无效的数据格式" });
+        return res.status(400).json({ error: "Invalid data format" });
       }
 
-      // 生成CSV内容
+      // Generate CSV content
       const headers = ["Date", "Company", "Job", "Status", "Notes", "URL"];
       const csvContent = [
         headers.join(","),
@@ -165,7 +167,7 @@ class ExportController {
         ),
       ].join("\n");
 
-      // 设置响应头
+      // Set response headers
       res.setHeader("Content-Type", "text/csv");
       res.setHeader(
         "Content-Disposition",
@@ -176,9 +178,9 @@ class ExportController {
 
       res.send(csvContent);
     } catch (error) {
-      console.error("CSV导出错误:", error);
+      console.error("CSV export error:", error);
       res.status(500).json({
-        error: "CSV导出失败",
+        error: "CSV export failed",
         message: error.message,
       });
     }

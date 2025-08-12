@@ -2,12 +2,12 @@ import { saveAs } from "file-saver";
 import html2canvas from "html2canvas";
 import { Job } from "../types/job";
 
-// CSV导出功能
+// CSV export functionality
 export const exportToCSV = (jobs: Job[]) => {
-  // 定义CSV头部
+  // Define CSV headers
   const headers = ["Date", "Company", "Job", "Status", "Notes", "URL"];
 
-  // 转换数据为CSV格式
+  // Convert data to CSV format
   const csvContent = [
     headers.join(","),
     ...jobs.map((job) =>
@@ -22,7 +22,7 @@ export const exportToCSV = (jobs: Job[]) => {
     ),
   ].join("\n");
 
-  // 创建Blob并下载
+  // Create Blob and download
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const fileName = `job-applications-${
     new Date().toISOString().split("T")[0]
@@ -30,18 +30,18 @@ export const exportToCSV = (jobs: Job[]) => {
   saveAs(blob, fileName);
 };
 
-// Google Sheets导出功能
+// Google Sheets export functionality
 export const exportToGoogleSheets = async (jobs: Job[]) => {
-  // 检查用户是否已登录（这里需要根据你的认证系统来实现）
+  // Check if user is logged in (implement according to your authentication system)
   const isLoggedIn = checkUserLoginStatus();
 
   if (!isLoggedIn) {
-    alert("请先登录以使用Google Sheets导出功能");
+    alert("Please login to use Google Sheets export feature");
     return;
   }
 
   try {
-    // 准备数据
+    // Prepare data
     const data = jobs.map((job) => ({
       date: job.appliedDate || "",
       company: job.company,
@@ -51,10 +51,10 @@ export const exportToGoogleSheets = async (jobs: Job[]) => {
       url: job.url || "",
     }));
 
-    // 获取认证token
+    // Get authentication token
     const token = localStorage.getItem("authToken");
 
-    // 创建Google Sheets API请求
+    // Create Google Sheets API request
     const response = await fetch("/api/export/google-sheets", {
       method: "POST",
       headers: {
@@ -69,42 +69,42 @@ export const exportToGoogleSheets = async (jobs: Job[]) => {
       if (result.success) {
         window.open(result.sheetUrl, "_blank");
       } else {
-        throw new Error(result.message || "导出失败");
+        throw new Error(result.message || "Export failed");
       }
     } else {
       const errorData = await response.json();
-      throw new Error(errorData.message || "导出失败");
+      throw new Error(errorData.message || "Export failed");
     }
   } catch (error) {
-    console.error("Google Sheets导出错误:", error);
+    console.error("Google Sheets export error:", error);
     alert(
-      `导出到Google Sheets失败: ${
-        error instanceof Error ? error.message : "未知错误"
+      `Failed to export to Google Sheets: ${
+        error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
 };
 
-// 检查用户登录状态（需要根据你的认证系统来实现）
+// Check user login status (implement according to your authentication system)
 const checkUserLoginStatus = (): boolean => {
-  // 这里需要根据你的认证系统来实现
-  // 例如检查localStorage中的token，或者调用认证API
+  // Implement according to your authentication system
+  // For example, check token in localStorage, or call authentication API
   const token = localStorage.getItem("authToken");
   return !!token;
 };
 
-// 导出Sankey diagram为图片
+// Export Sankey diagram as image
 export const exportSankeyAsImage = async (svgElement: SVGSVGElement) => {
   try {
-    // 使用html2canvas将SVG转换为图片
+    // Use html2canvas to convert SVG to image
     const canvas = await html2canvas(svgElement as unknown as HTMLElement, {
       backgroundColor: "#ffffff",
-      scale: 2, // 提高图片质量
+      scale: 2, // Improve image quality
       useCORS: true,
       allowTaint: true,
     });
 
-    // 将canvas转换为blob并下载
+    // Convert canvas to blob and download
     canvas.toBlob((blob) => {
       if (blob) {
         const fileName = `sankey-diagram-${
@@ -114,12 +114,12 @@ export const exportSankeyAsImage = async (svgElement: SVGSVGElement) => {
       }
     }, "image/png");
   } catch (error) {
-    console.error("图片导出错误:", error);
-    alert("图片导出失败，请稍后重试");
+    console.error("Image export error:", error);
+    alert("Image export failed, please try again later");
   }
 };
 
-// 导出分享菜单组件的数据
+// Export share menu component data
 export interface ExportOption {
   label: string;
   icon: string;
@@ -129,13 +129,13 @@ export interface ExportOption {
 
 export const getTableExportOptions = (jobs: Job[]): ExportOption[] => [
   {
-    label: "导出为CSV",
-    icon: "📊",
+    label: "Export as CSV",
+    icon: "",
     action: () => exportToCSV(jobs),
   },
   {
-    label: "导出到Google Sheets",
-    icon: "📈",
+    label: "Export to Google Sheets",
+    icon: "",
     action: () => exportToGoogleSheets(jobs),
     disabled: !checkUserLoginStatus(),
   },
@@ -145,8 +145,8 @@ export const getStatsExportOptions = (
   svgElement: SVGSVGElement | null
 ): ExportOption[] => [
   {
-    label: "下载Sankey图片",
-    icon: "🖼️",
+    label: "Save Image",
+    icon: "",
     action: () => svgElement && exportSankeyAsImage(svgElement),
     disabled: !svgElement,
   },

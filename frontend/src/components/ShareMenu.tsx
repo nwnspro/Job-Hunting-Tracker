@@ -36,7 +36,7 @@ export function ShareMenu({ exportOptions, className = "" }: ShareMenuProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-1 hover:bg-gray-100 rounded transition-colors flex items-center gap-1"
-        title="分享/导出"
+        title="Share/Export"
       >
         <Share2 className="w-4 h-4 text-gray-400 hover:text-gray-600" />
         <ChevronDown
@@ -47,23 +47,20 @@ export function ShareMenu({ exportOptions, className = "" }: ShareMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
+        <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-0.5">
           {exportOptions.map((option, index) => (
             <button
               key={index}
               onClick={() => handleOptionClick(option)}
               disabled={option.disabled}
-              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 ${
+              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 ${
                 option.disabled
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-gray-700 hover:text-gray-900"
               }`}
             >
-              <span className="text-base">{option.icon}</span>
+              <span className="text-sm">{option.icon}</span>
               <span>{option.label}</span>
-              {option.disabled && (
-                <span className="text-xs text-gray-400 ml-auto">(需登录)</span>
-              )}
             </button>
           ))}
         </div>
