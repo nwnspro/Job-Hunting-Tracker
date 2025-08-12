@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from "react";
-import { JobTable } from "./JobTable";
+import { useState, useMemo } from "react";
+
 import { JobStatsComponent } from "./JobStats";
 import { Job } from "../types/job";
-import { Search, Frown, Share2, Plus, Download } from "lucide-react";
-import { Button } from "./ui/button";
-import { AddJobForm } from "./AddJobForm";
+import { Search, Frown, Plus } from "lucide-react";
+
+import { ShareMenu } from "./ShareMenu";
+import { getTableExportOptions } from "../utils/exportUtils";
 
 interface ContentProps {
   viewMode: "table" | "stats";
@@ -12,12 +13,7 @@ interface ContentProps {
   stats: any;
   onUpdateJob: (id: string, updates: Partial<Job>) => void;
   onDeleteJob: (id: string) => void;
-  onAddJob: (
-    jobData: Omit<
-      Job,
-      "id" | "lastUpdated" | "statusHistory" | "lastStatusDate"
-    >
-  ) => void;
+  onAddJob: (jobData: Omit<Job, "id" | "lastUpdated">) => void;
   onExport: () => void;
   showAddForm: boolean;
   setShowAddForm: (show: boolean) => void;
@@ -30,7 +26,7 @@ export function Content({
   onUpdateJob,
   onDeleteJob,
   onAddJob,
-  onExport,
+
   showAddForm,
   setShowAddForm,
 }: ContentProps) {
@@ -139,9 +135,7 @@ export function Content({
               >
                 <Plus className="w-4 h-4 text-gray-400 hover:text-gray-600" />
               </button>
-              <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                <Share2 className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-              </button>
+              <ShareMenu exportOptions={getTableExportOptions(jobs)} />
             </div>
           </div>
         </div>
@@ -271,6 +265,8 @@ export function Content({
                           salary: "",
                           location: "",
                           url: "",
+                          statusHistory: [],
+                          lastStatusDate: dateEl.value,
                         });
                         setShowAddForm(false);
                       }

@@ -31,7 +31,11 @@ export function AddJobForm({ onAddJob, onCancel }: AddJobFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddJob(formData);
+    onAddJob({
+      ...formData,
+      statusHistory: [],
+      lastStatusDate: formData.appliedDate,
+    });
     setFormData({
       company: "",
       position: "",

@@ -10,6 +10,7 @@ const { errorHandler } = require("./middleware/errorHandler");
 const { notFound } = require("./middleware/notFound");
 const jobApplicationRoutes = require("./routes/jobApplicationRoutes");
 const authRoutes = require("./routes/authRoutes");
+const exportRoutes = require("./routes/exportRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -59,6 +60,7 @@ app.get("/health", (req, res) => {
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/applications", jobApplicationRoutes);
+app.use("/api/export", exportRoutes);
 
 // 404 handler
 app.use(notFound);

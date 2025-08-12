@@ -19,7 +19,16 @@ export interface Job {
   url?: string;
 }
 
-export type JobStatus = "Applied" | "Interviewing" | "Rejected" | "Offer";
+export type JobStatus =
+  | "Applied"
+  | "Interview Scheduled"
+  | "Interview Completed"
+  | "Interviewing"
+  | "Rejected"
+  | "Offer"
+  | "Offer Received"
+  | "Withdrawn"
+  | "No Response";
 
 export interface JobFilters {
   status?: JobStatus;

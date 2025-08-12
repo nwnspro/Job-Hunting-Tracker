@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "./ui/button";
 import { Plus, Download } from "lucide-react";
 
@@ -8,11 +7,7 @@ interface ControlsProps {
   onExport: () => void;
 }
 
-export function Controls({
-  showAddForm,
-  setShowAddForm,
-  onExport,
-}: ControlsProps) {
+export function Controls({ setShowAddForm, onExport }: ControlsProps) {
   return (
     <>
       {/* Content inside the sheet */}

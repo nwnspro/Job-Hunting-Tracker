@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Job } from "./types/job";
 import { useJobs } from "./hooks/useJobs";
-import { exportJobsToCSV } from "./utils/exportUtils";
+import { exportToCSV } from "./utils/exportUtils";
 import { Header } from "./components/Header";
 import { Content } from "./components/Content";
 import { Loading } from "./components/Loading";
@@ -48,7 +48,7 @@ function App() {
   };
 
   const exportData = () => {
-    exportJobsToCSV(jobs);
+    exportToCSV(jobs);
   };
 
   if (jobsLoading || statsLoading) {

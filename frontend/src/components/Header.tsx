@@ -32,7 +32,7 @@ export function Header({
       {/* Centered Title */}
       <div className="text-center mb-8">
         <h1 className="w-[831px] justify-start text-black text-5xl font-extralight font-['Onest'] italic mb-8">
-          Hey, What new progress today?
+          Hey, what's new progress today?
         </h1>
       </div>
 

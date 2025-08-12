@@ -1,4 +1,4 @@
-import { Job, JobStatus, JobStats } from "../types/job";
+import { Job, JobStats } from "../types/job";
 
 // Mock data
 const mockJobs: Job[] = [

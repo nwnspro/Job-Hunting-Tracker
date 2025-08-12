@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal } from "d3-sankey";
+import { ShareMenu } from "./ShareMenu";
+import { getStatsExportOptions } from "../utils/exportUtils";
 
 interface JobStatsProps {
   stats: any;
@@ -26,9 +28,13 @@ interface SankeyLink {
 
 export function JobStatsComponent({ stats, jobs = [] }: JobStatsProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [svgElement, setSvgElement] = useState<SVGSVGElement | null>(null);
 
   useEffect(() => {
     if (!svgRef.current) return;
+
+    // 设置SVG元素引用
+    setSvgElement(svgRef.current);
 
     // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
@@ -257,9 +263,12 @@ export function JobStatsComponent({ stats, jobs = [] }: JobStatsProps) {
 
       {/* Sankey Diagram Section - Larger */}
       <div className="bg-white p-6 rounded-lg flex-1">
-        <h4 className="text-md font-medium mb-4 text-center">
-          Application Status Distribution
-        </h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-md font-medium">
+            Application Status Distribution
+          </h4>
+          <ShareMenu exportOptions={getStatsExportOptions(svgElement)} />
+        </div>
         <div className="h-80">
           <svg ref={svgRef} className="w-full h-full"></svg>
         </div>
