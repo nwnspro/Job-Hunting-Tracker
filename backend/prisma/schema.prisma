@@ -1,14 +1,17 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+        
 
 model User {
   id        String   @id @default(cuid())
@@ -23,32 +26,22 @@ model User {
 }
 
 model JobApplication {
-  id             String   @id @default(cuid())
-  company        String
-  position       String
-  status         JobStatus
-  appliedDate    DateTime
-  jobUrl         String?
-  description    String?
-  notes          String?
-  salary         String?
-  location       String?
-  contactPerson  String?
-  contactEmail   String?
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          String    @id @default(cuid())
+  company     String
+  position    String
+  status      JobStatus
+  appliedDate DateTime  @default(now())
+  notes       String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt   DateTime  @updatedAt
 
   @@map("job_applications")
 }
 
 enum JobStatus {
   APPLIED
-  INTERVIEW_SCHEDULED
-  INTERVIEW_COMPLETED
-  OFFER_RECEIVED
+  INTERVIEWING
+  OFFER
   REJECTED
-  WITHDRAWN
-  ACCEPTED
 } 
