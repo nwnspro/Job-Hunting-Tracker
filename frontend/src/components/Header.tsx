@@ -1,10 +1,10 @@
 import { User, BookText, BarChart3 } from "lucide-react";
+import { signInWithGoogle } from "../lib/auth.client";
 
 interface HeaderProps {
   inputValue: string;
   setInputValue: (value: string) => void;
   onAutoFill: () => void;
-  onUserLogin: () => void;
   viewMode: "table" | "stats";
   setViewMode: (mode: "table" | "stats") => void;
 }
@@ -13,7 +13,6 @@ export function Header({
   inputValue,
   setInputValue,
   onAutoFill,
-  onUserLogin,
   viewMode,
   setViewMode,
 }: HeaderProps) {
@@ -22,7 +21,7 @@ export function Header({
       {/* User Login Icon - Top Right */}
       <div className="absolute top-0 right-2 z-10">
         <button
-          onClick={onUserLogin}
+          onClick={signInWithGoogle}
           className="w-12 h-12 relative bg-gray-700 rounded-[100px] overflow-hidden flex items-center justify-center hover:bg-gray-700 transition-all duration-200"
         >
           <User className="w-6 h-6 text-white" />

@@ -1,12 +1,13 @@
-const { JobApplicationService } = require("../services/jobApplicationService");
+import { JobApplicationService } from "../services/jobApplicationService.js";
 
 const jobApplicationService = new JobApplicationService();
 
 class JobApplicationController {
-  // 创建新的求职申请
+  // Create job application
   async createJobApplication(req, res) {
     try {
-      const userId = req.user?.id; // 从JWT token中获取
+      // TODO: Get user ID from BetterAuth session
+      const userId = req.user?.id; 
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -24,7 +25,7 @@ class JobApplicationController {
     }
   }
 
-  // 获取用户的所有求职申请
+  // Get user job applications
   async getUserJobApplications(req, res) {
     try {
       const userId = req.user?.id;
@@ -41,7 +42,7 @@ class JobApplicationController {
     }
   }
 
-  // 根据ID获取求职申请
+  // Get job application by ID
   async getJobApplicationById(req, res) {
     try {
       const { id } = req.params;
@@ -58,7 +59,7 @@ class JobApplicationController {
         return res.status(404).json({ error: "Job application not found" });
       }
 
-      // 验证用户权限
+      // Verify user permissions
       if (jobApplication.userId !== userId) {
         return res.status(403).json({ error: "Forbidden" });
       }
@@ -70,7 +71,7 @@ class JobApplicationController {
     }
   }
 
-  // 更新求职申请
+  // Update job application
   async updateJobApplication(req, res) {
     try {
       const { id } = req.params;
@@ -93,7 +94,7 @@ class JobApplicationController {
     }
   }
 
-  // 删除求职申请
+  // Delete job application
   async deleteJobApplication(req, res) {
     try {
       const { id } = req.params;
@@ -114,7 +115,7 @@ class JobApplicationController {
     }
   }
 
-  // 根据状态筛选求职申请
+  // Filter by status
   async getJobApplicationsByStatus(req, res) {
     try {
       const { status } = req.params;
@@ -133,7 +134,7 @@ class JobApplicationController {
     }
   }
 
-  // 搜索求职申请
+  // Search job applications
   async searchJobApplications(req, res) {
     try {
       const { q } = req.query;
@@ -161,4 +162,4 @@ class JobApplicationController {
   }
 }
 
-module.exports = { JobApplicationController };
+export { JobApplicationController };

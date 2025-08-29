@@ -41,11 +41,7 @@ function App() {
     console.log("Auto fill clicked");
   };
 
-  const handleUserLogin = () => {
-    // User login functionality can be implemented here
-    console.log("User login clicked");
-    // 这里可以添加登录逻辑，比如打开登录模态框或跳转到登录页面
-  };
+
 
   const exportData = () => {
     exportToCSV(jobs);
@@ -63,7 +59,6 @@ function App() {
           inputValue={inputValue}
           setInputValue={setInputValue}
           onAutoFill={handleAutoFill}
-          onUserLogin={handleUserLogin}
           viewMode={viewMode}
           setViewMode={setViewMode}
         />

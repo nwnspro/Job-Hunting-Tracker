@@ -1,34 +1,30 @@
-const { Router } = require("express");
-const {
-  JobApplicationController,
-} = require("../controllers/jobApplicationController");
-const { authenticateToken } = require("../middleware/auth");
+import { Router } from "express";
+import { JobApplicationController } from "../controllers/jobApplicationController.js";
 
 const router = Router();
 const jobApplicationController = new JobApplicationController();
 
-// 所有路由都需要身份验证
-router.use(authenticateToken);
+// Note: JWT auth removed, using BetterAuth instead
 
-// 创建新的求职申请
+// Create job application
 router.post(
   "/",
   jobApplicationController.createJobApplication.bind(jobApplicationController)
 );
 
-// 获取用户的所有求职申请
+// Get user job applications
 router.get(
   "/",
   jobApplicationController.getUserJobApplications.bind(jobApplicationController)
 );
 
-// 搜索求职申请
+// Search job applications
 router.get(
   "/search",
   jobApplicationController.searchJobApplications.bind(jobApplicationController)
 );
 
-// 根据状态筛选求职申请
+// Filter by status
 router.get(
   "/status/:status",
   jobApplicationController.getJobApplicationsByStatus.bind(
@@ -36,22 +32,22 @@ router.get(
   )
 );
 
-// 根据ID获取求职申请
+// Get by ID
 router.get(
   "/:id",
   jobApplicationController.getJobApplicationById.bind(jobApplicationController)
 );
 
-// 更新求职申请
+// Update job application
 router.post(
   "/:id",
   jobApplicationController.updateJobApplication.bind(jobApplicationController)
 );
 
-// 删除求职申请
+// Delete job application
 router.delete(
   "/:id",
   jobApplicationController.deleteJobApplication.bind(jobApplicationController)
 );
 
-module.exports = router;
+export default router;

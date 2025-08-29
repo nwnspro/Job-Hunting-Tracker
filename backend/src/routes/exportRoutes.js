@@ -1,11 +1,10 @@
-const { Router } = require("express");
-const { ExportController } = require("../controllers/exportController");
-const { authenticateToken } = require("../middleware/auth");
+import { Router } from "express";
+import { ExportController } from "../controllers/exportController.js";
 
 const router = Router();
 const exportController = new ExportController();
 
-router.use(authenticateToken);
+// Note: JWT auth removed, using BetterAuth instead
 
 router.post(
   "/google-sheets",
@@ -14,4 +13,4 @@ router.post(
 
 router.post("/csv", exportController.exportToCSV.bind(exportController));
 
-module.exports = router;
+export default router;

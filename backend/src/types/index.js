@@ -1,12 +1,9 @@
-// 用户状态枚举
+// 工作申请状态枚举 - 匹配 Prisma schema
 const JobStatus = {
   APPLIED: "APPLIED",
-  INTERVIEW_SCHEDULED: "INTERVIEW_SCHEDULED",
-  INTERVIEW_COMPLETED: "INTERVIEW_COMPLETED",
-  OFFER_RECEIVED: "OFFER_RECEIVED",
+  INTERVIEWING: "INTERVIEWING", 
+  OFFER: "OFFER",
   REJECTED: "REJECTED",
-  WITHDRAWN: "WITHDRAWN",
-  ACCEPTED: "ACCEPTED",
 };
 
 // 验证函数
@@ -26,7 +23,8 @@ const validateJobApplication = (jobApp) => {
     typeof jobApp.userId === "string" &&
     typeof jobApp.company === "string" &&
     typeof jobApp.position === "string" &&
-    Object.values(JobStatus).includes(jobApp.status)
+    Object.values(JobStatus).includes(jobApp.status) &&
+    (jobApp.notes === null || typeof jobApp.notes === "string")
   );
 };
 
@@ -36,7 +34,7 @@ const validateCreateJobApplicationRequest = (data) => {
     typeof data.company === "string" &&
     typeof data.position === "string" &&
     Object.values(JobStatus).includes(data.status) &&
-    data.appliedDate
+    (data.notes === undefined || data.notes === null || typeof data.notes === "string")
   );
 };
 
@@ -45,22 +43,15 @@ const validateUpdateJobApplicationRequest = (data) => {
     data &&
     (data.company === undefined || typeof data.company === "string") &&
     (data.position === undefined || typeof data.position === "string") &&
-    (data.status === undefined ||
-      Object.values(JobStatus).includes(data.status))
+    (data.status === undefined || Object.values(JobStatus).includes(data.status)) &&
+    (data.notes === undefined || data.notes === null || typeof data.notes === "string")
   );
 };
 
-const validateAuthRequest = (data) => {
-  return (
-    data && typeof data.email === "string" && typeof data.password === "string"
-  );
-};
-
-module.exports = {
+export {
   JobStatus,
   validateUser,
   validateJobApplication,
   validateCreateJobApplicationRequest,
   validateUpdateJobApplicationRequest,
-  validateAuthRequest,
 };

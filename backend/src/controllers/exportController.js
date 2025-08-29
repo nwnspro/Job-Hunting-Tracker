@@ -1,4 +1,4 @@
-const { google } = require("googleapis");
+import { google } from "googleapis";
 
 class ExportController {
   constructor() {
@@ -187,4 +187,4 @@ class ExportController {
   }
 }
 
-module.exports = { ExportController };
+export { ExportController };

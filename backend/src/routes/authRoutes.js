@@ -1,27 +1,12 @@
-const { Router } = require("express");
-const { AuthController } = require("../controllers/authController");
-const { authenticateToken } = require("../middleware/auth");
+import express from 'express';
+import { auth } from '../services/auth.js';
 
-const router = Router();
-const authController = new AuthController();
+const router = express.Router();
 
-router.post("/register", authController.register.bind(authController));
-router.post("/login", authController.login.bind(authController));
+// Better-auth handles all auth routes automatically
+router.use('/', auth.handler);
 
-router.get(
-  "/me",
-  authenticateToken,
-  authController.getCurrentUser.bind(authController)
-);
-router.put(
-  "/profile",
-  authenticateToken,
-  authController.updateUser.bind(authController)
-);
-router.put(
-  "/password",
-  authenticateToken,
-  authController.changePassword.bind(authController)
-);
+// Test route to verify auth is working
+router.get('/test', (req, res) => res.json({ ok: true }));
 
-module.exports = router;
+export default router;

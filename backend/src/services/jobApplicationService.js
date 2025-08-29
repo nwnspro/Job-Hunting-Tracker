@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -82,4 +82,4 @@ class JobApplicationService {
   }
 }
 
-module.exports = { JobApplicationService };
+export { JobApplicationService };

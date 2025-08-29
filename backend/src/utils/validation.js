@@ -74,4 +74,4 @@ class ValidationUtils {
   }
 }
 
-module.exports = { ValidationUtils };
+export { ValidationUtils };
