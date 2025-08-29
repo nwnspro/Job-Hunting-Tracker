@@ -1,35 +1,66 @@
 const errorHandler = (err, req, res, next) => {
-  console.error("Error:", err);
+  // Log error with context for debugging
+  console.error("Error occurred:", {
+    message: err.message,
+    name: err.name,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    url: req.url,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+  });
 
-  // 默认错误状态码
+  // Default error response
   let statusCode = 500;
   let message = "Internal Server Error";
 
-  // 根据错误类型设置状态码和消息
+  // Handle specific error types
   if (err.name === "ValidationError") {
     statusCode = 400;
     message = err.message;
-  } else if (err.name === "UnauthorizedError") {
+  } else if (err.name === "PrismaClientKnownRequestError") {
+    statusCode = 400;
+    message = "Database operation failed";
+    // Handle specific Prisma error codes
+    if (err.code === "P2002") {
+      message = "Duplicate entry";
+    } else if (err.code === "P2025") {
+      message = "Record not found";
+    }
+  } else if (err.name === "PrismaClientValidationError") {
+    statusCode = 400;
+    message = "Invalid data format";
+  } else if (err.name === "UnauthorizedError" || err.status === 401) {
     statusCode = 401;
     message = "Unauthorized";
-  } else if (err.name === "ForbiddenError") {
+  } else if (err.name === "ForbiddenError" || err.status === 403) {
     statusCode = 403;
     message = "Forbidden";
-  } else if (err.name === "NotFoundError") {
+  } else if (err.name === "NotFoundError" || err.status === 404) {
     statusCode = 404;
     message = "Not Found";
-  } else if (err.name === "ConflictError") {
+  } else if (err.name === "ConflictError" || err.status === 409) {
     statusCode = 409;
-    message = err.message;
+    message = err.message || "Conflict";
   }
 
-  res.status(statusCode).json({
+  // Build error response
+  const response = {
     error: {
       message,
       statusCode,
       timestamp: new Date().toISOString(),
     },
-  });
+  };
+
+  // Include additional details in development
+  if (process.env.NODE_ENV === "development") {
+    response.error.details = {
+      name: err.name,
+      stack: err.stack,
+    };
+  }
+
+  res.status(statusCode).json(response);
 };
 
 export { errorHandler };

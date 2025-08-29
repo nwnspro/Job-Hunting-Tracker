@@ -1,53 +1,127 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
+import { ValidationUtils } from '../utils/validation.js';
 
 const prisma = new PrismaClient();
 
 class JobApplicationService {
-  // 创建新的求职申请
+  // Create job application
   async createJobApplication(userId, data) {
+    // Validate input data
+    const validation = ValidationUtils.validateCreateJobApplicationRequest(data);
+    if (!validation.isValid) {
+      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+    }
+
+    const jobApplicationData = {
+      userId,
+      company: data.company.trim(),
+      position: data.position ? data.position.trim() : data.company.trim() + ' Position',
+      status: data.status || 'APPLIED',
+      notes: data.notes || null,
+      url: data.url || null,
+      appliedDate: data.appliedDate ? new Date(data.appliedDate) : new Date(),
+    };
+
     return await prisma.jobApplication.create({
-      data: {
-        ...data,
-        userId,
+      data: jobApplicationData,
+    });
+  }
+
+  // Get all job applications for user
+  async getUserJobApplications(userId, options = {}) {
+    const { 
+      status, 
+      page = 1, 
+      pageSize = 50, 
+      sortBy = 'appliedDate', 
+      sortOrder = 'desc' 
+    } = options;
+
+    const where = { userId };
+    if (status) {
+      where.status = status;
+    }
+
+    const orderBy = { [sortBy]: sortOrder };
+    const skip = (page - 1) * pageSize;
+
+    const [total, jobApplications] = await Promise.all([
+      prisma.jobApplication.count({ where }),
+      prisma.jobApplication.findMany({
+        where,
+        orderBy,
+        skip,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      jobApplications,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
       },
-    });
+    };
   }
 
-  // 获取用户的所有求职申请
-  async getUserJobApplications(userId) {
-    return await prisma.jobApplication.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  // 根据ID获取求职申请
+  // Get job application by ID
   async getJobApplicationById(id) {
     return await prisma.jobApplication.findUnique({
       where: { id },
     });
   }
 
-  // 更新求职申请
+  // Update job application
   async updateJobApplication(id, userId, data) {
-    // 验证用户权限
-    const existing = await this.getJobApplicationById(id);
-    if (!existing || existing.userId !== userId) {
-      throw new Error("Unauthorized or job application not found");
+    // Check if job application exists and belongs to user
+    const existingJobApplication = await prisma.jobApplication.findUnique({
+      where: { id },
+    });
+
+    if (!existingJobApplication) {
+      throw new Error('Job application not found');
     }
+
+    if (existingJobApplication.userId !== userId) {
+      throw new Error('Unauthorized: Cannot update this job application');
+    }
+
+    // Validate update data
+    const validation = ValidationUtils.validateUpdateJobApplicationRequest(data);
+    if (!validation.isValid) {
+      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+    }
+
+    // Prepare update data
+    const updateData = {};
+    if (data.company) updateData.company = data.company.trim();
+    if (data.position) updateData.position = data.position.trim();
+    if (data.status) updateData.status = data.status;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.url !== undefined) updateData.url = data.url;
+    if (data.appliedDate) updateData.appliedDate = new Date(data.appliedDate);
 
     return await prisma.jobApplication.update({
       where: { id },
-      data,
+      data: updateData,
     });
   }
 
-  // 删除求职申请
+  // Delete job application
   async deleteJobApplication(id, userId) {
-    // 验证用户权限
-    const existing = await this.getJobApplicationById(id);
-    if (!existing || existing.userId !== userId) {
-      throw new Error("Unauthorized or job application not found");
+    // Check if job application exists and belongs to user
+    const existingJobApplication = await prisma.jobApplication.findUnique({
+      where: { id },
+    });
+
+    if (!existingJobApplication) {
+      throw new Error('Job application not found');
+    }
+
+    if (existingJobApplication.userId !== userId) {
+      throw new Error('Unauthorized: Cannot delete this job application');
     }
 
     await prisma.jobApplication.delete({
@@ -55,29 +129,48 @@ class JobApplicationService {
     });
   }
 
-  // 根据状态筛选求职申请
+  // Get job applications by status
   async getJobApplicationsByStatus(userId, status) {
     return await prisma.jobApplication.findMany({
       where: {
         userId,
-        status: status,
+        status,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        appliedDate: 'desc',
+      },
     });
   }
 
-  // 搜索求职申请
+  // Search job applications
   async searchJobApplications(userId, query) {
     return await prisma.jobApplication.findMany({
       where: {
         userId,
         OR: [
-          { company: { contains: query, mode: "insensitive" } },
-          { position: { contains: query, mode: "insensitive" } },
-          { description: { contains: query, mode: "insensitive" } },
+          {
+            company: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            position: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            notes: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
         ],
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        appliedDate: 'desc',
+      },
     });
   }
 }

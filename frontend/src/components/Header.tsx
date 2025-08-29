@@ -1,5 +1,6 @@
-import { User, BookText, BarChart3 } from "lucide-react";
-import { signInWithGoogle } from "../lib/auth.client";
+import { User, BookText, BarChart3, LogOut } from "lucide-react";
+import { signInWithGoogle, signOut, getSession } from "../lib/auth.client";
+import { useState, useEffect } from "react";
 
 interface HeaderProps {
   inputValue: string;
@@ -16,16 +17,90 @@ export function Header({
   viewMode,
   setViewMode,
 }: HeaderProps) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const checkSession = async () => {
+    try {
+      const session = await getSession();
+      console.log("Session data:", session); // 调试信息
+      console.log("User data:", session?.data?.user); // 调试信息
+      setUser(session?.data?.user || null);
+    } catch (error) {
+      console.error("Failed to get session:", error);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      // Refresh session after login
+      setTimeout(checkSession, 1000);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <div className="relative">
-      {/* User Login Icon - Top Right */}
-      <div className="absolute top-0 right-2 z-10">
-        <button
-          onClick={signInWithGoogle}
-          className="w-12 h-12 relative bg-gray-700 rounded-[100px] overflow-hidden flex items-center justify-center hover:bg-gray-700 transition-all duration-200"
-        >
-          <User className="w-6 h-6 text-white" />
-        </button>
+      {/* User Login/Profile - Top Right */}
+      <div className="absolute top-0 right-2 z-20">
+        {loading ? (
+          <div className="w-12 h-12 bg-gray-300 rounded-full animate-pulse"></div>
+        ) : user ? (
+          <div className="relative group">
+            <button className="w-12 h-12 rounded-full overflow-hidden border-2 border-white hover:border-gray-300 transition-all duration-200">
+              {user.image ? (
+                <img 
+                  src={user.image} 
+                  alt={user.name || "User"} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+              )}
+            </button>
+            {/* Dropdown Menu */}
+            <div className="absolute top-14 right-0 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+              <div className="p-3 border-b">
+                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={handleSignIn}
+            className="w-12 h-12 relative bg-gray-700 rounded-[100px] overflow-hidden flex items-center justify-center hover:bg-gray-600 transition-all duration-200"
+          >
+            <User className="w-6 h-6 text-white" />
+          </button>
+        )}
       </div>
 
       {/* Centered Title */}
@@ -57,7 +132,7 @@ export function Header({
       </div>
 
       {/* View Toggle Buttons - Right side below avatar */}
-      <div className="absolute top-24 right-4 z-10 flex items-center gap-5">
+      <div className="absolute top-24 right-4 z-0 flex items-center gap-5">
         {/* Table Icon */}
         <button
           onClick={() => setViewMode("table")}

@@ -6,12 +6,9 @@ class JobApplicationController {
   // Create job application
   async createJobApplication(req, res) {
     try {
-      // TODO: Get user ID from BetterAuth session
-      const userId = req.user?.id; 
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
+      // Get user ID from authenticated session (middleware ensures this exists)
+      const userId = req.user.id;
+      
       const data = req.body;
       const jobApplication = await jobApplicationService.createJobApplication(
         userId,
@@ -28,14 +25,19 @@ class JobApplicationController {
   // Get user job applications
   async getUserJobApplications(req, res) {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = req.user.id;
+      const { status, page, pageSize, sortBy, sortOrder } = req.query;
 
-      const jobApplications =
-        await jobApplicationService.getUserJobApplications(userId);
-      res.json(jobApplications);
+      const options = {
+        status,
+        page: page ? parseInt(page) : 1,
+        pageSize: pageSize ? parseInt(pageSize) : 50,
+        sortBy: sortBy || 'appliedDate',
+        sortOrder: sortOrder || 'desc'
+      };
+
+      const result = await jobApplicationService.getUserJobApplications(userId, options);
+      res.json(result);
     } catch (error) {
       console.error("Error getting job applications:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -46,11 +48,7 @@ class JobApplicationController {
   async getJobApplicationById(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = req.user.id;
 
       const jobApplication = await jobApplicationService.getJobApplicationById(
         id
@@ -75,12 +73,8 @@ class JobApplicationController {
   async updateJobApplication(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user.id;
       const data = req.body;
-
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
 
       const updatedJobApplication =
         await jobApplicationService.updateJobApplication(id, userId, data);
@@ -98,11 +92,7 @@ class JobApplicationController {
   async deleteJobApplication(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = req.user.id;
 
       await jobApplicationService.deleteJobApplication(id, userId);
       res.status(204).send();
@@ -119,11 +109,7 @@ class JobApplicationController {
   async getJobApplicationsByStatus(req, res) {
     try {
       const { status } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = req.user.id;
 
       const jobApplications =
         await jobApplicationService.getJobApplicationsByStatus(userId, status);
@@ -138,11 +124,7 @@ class JobApplicationController {
   async searchJobApplications(req, res) {
     try {
       const { q } = req.query;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = req.user.id;
 
       if (!q || typeof q !== "string") {
         return res.status(400).json({

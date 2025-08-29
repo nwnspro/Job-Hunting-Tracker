@@ -12,6 +12,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 import jobApplicationRoutes from "./routes/jobApplicationRoutes.js";
 import exportRoutes from "./routes/exportRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -65,7 +66,13 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Redirect root to frontend after auth
+app.get("/", (req, res) => {
+  res.redirect("http://localhost:5173");
+});
+
 // API routes (auth routes handled by Better Auth)
+app.use("/api/users", userRoutes);
 app.use("/api/applications", jobApplicationRoutes);
 app.use("/api/export", exportRoutes);
 

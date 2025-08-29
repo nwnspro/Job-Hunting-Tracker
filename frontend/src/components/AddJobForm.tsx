@@ -10,22 +10,19 @@ interface AddJobFormProps {
 }
 
 const statusOptions: JobStatus[] = [
-  "Applied",
-  "Interview Scheduled",
-  "Interview Completed",
-  "Offer Received",
-  "Rejected",
+  "APPLIED",
+  "INTERVIEWING", 
+  "OFFER",
+  "REJECTED",
 ];
 
 export function AddJobForm({ onAddJob, onCancel }: AddJobFormProps) {
   const [formData, setFormData] = useState({
     company: "",
     position: "",
-    status: "Applied" as JobStatus,
+    status: "APPLIED" as JobStatus,
     notes: "",
     appliedDate: new Date().toISOString().split("T")[0],
-    salary: "",
-    location: "",
     url: "",
   });
 
@@ -33,17 +30,15 @@ export function AddJobForm({ onAddJob, onCancel }: AddJobFormProps) {
     e.preventDefault();
     onAddJob({
       ...formData,
-      statusHistory: [],
-      lastStatusDate: formData.appliedDate,
+      userId: "", // Will be set by the API
+      updatedAt: new Date().toISOString(),
     });
     setFormData({
       company: "",
       position: "",
-      status: "Applied",
+      status: "APPLIED",
       notes: "",
       appliedDate: new Date().toISOString().split("T")[0],
-      salary: "",
-      location: "",
       url: "",
     });
   };
@@ -103,25 +98,9 @@ export function AddJobForm({ onAddJob, onCancel }: AddJobFormProps) {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Salary Range</label>
-          <Input
-            value={formData.salary}
-            onChange={(e) => handleChange("salary", e.target.value)}
-            placeholder="e.g., $80k - $120k"
-          />
-        </div>
+
 
         <div>
-          <label className="block text-sm font-medium mb-2">Location</label>
-          <Input
-            value={formData.location}
-            onChange={(e) => handleChange("location", e.target.value)}
-            placeholder="e.g., San Francisco, CA"
-          />
-        </div>
-
-        <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-2">Job URL</label>
           <Input
             type="url"

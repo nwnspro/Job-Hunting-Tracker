@@ -1,19 +1,17 @@
+import { JobStatus } from "../types/index.js";
+
 class ValidationUtils {
-  // 验证邮箱格式
-  static isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  // Validate URL format for auto-fill feature
+  static isValidUrl(url) {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  // 验证密码强度
-  static isStrongPassword(password) {
-    // 至少8个字符，包含大小写字母、数字和特殊字符
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return passwordRegex.test(password);
-  }
-
-  // 验证求职申请数据
+  // Validate job application data for errors (returns array of errors)
   static validateJobApplication(data) {
     const errors = [];
 
@@ -25,44 +23,75 @@ class ValidationUtils {
       errors.push("Position is required");
     }
 
-    if (!data.appliedDate) {
-      errors.push("Applied date is required");
-    }
-
-    if (data.jobUrl && !this.isValidUrl(data.jobUrl)) {
+    if (data.url && !this.isValidUrl(data.url)) {
       errors.push("Invalid job URL format");
-    }
-
-    if (data.contactEmail && !this.isValidEmail(data.contactEmail)) {
-      errors.push("Invalid contact email format");
     }
 
     return errors;
   }
 
-  // 验证URL格式
-  static isValidUrl(url) {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
+  // Validate user data structure (returns boolean)
+  static validateUser(user) {
+    return (
+      user &&
+      typeof user.id === "string" &&
+      typeof user.email === "string" &&
+      typeof user.name === "string"
+    );
   }
 
-  // 验证日期格式
+  // Validate complete job application object (returns boolean)
+  static validateJobApplicationObject(jobApp) {
+    return (
+      jobApp &&
+      typeof jobApp.id === "string" &&
+      typeof jobApp.userId === "string" &&
+      typeof jobApp.company === "string" &&
+      typeof jobApp.position === "string" &&
+      Object.values(JobStatus).includes(jobApp.status) &&
+      (jobApp.notes === null || typeof jobApp.notes === "string") &&
+      (jobApp.url === undefined || jobApp.url === null || typeof jobApp.url === "string")
+    );
+  }
+
+  // Validate create request data (returns boolean)
+  static validateCreateJobApplicationRequest(data) {
+    return (
+      data &&
+      typeof data.company === "string" &&
+      typeof data.position === "string" &&
+      Object.values(JobStatus).includes(data.status) &&
+      (data.notes === undefined || data.notes === null || typeof data.notes === "string") &&
+      (data.url === undefined || data.url === null || typeof data.url === "string")
+    );
+  }
+
+  // Validate update request data (returns boolean)
+  static validateUpdateJobApplicationRequest(data) {
+    return (
+      data &&
+      (data.company === undefined || typeof data.company === "string") &&
+      (data.position === undefined || typeof data.position === "string") &&
+      (data.status === undefined || Object.values(JobStatus).includes(data.status)) &&
+      (data.notes === undefined || data.notes === null || typeof data.notes === "string") &&
+      (data.url === undefined || data.url === null || typeof data.url === "string")
+    );
+  }
+
+  // Validate date format
   static isValidDate(date) {
     if (!date) return false;
     const d = new Date(date);
     return d instanceof Date && !isNaN(d.getTime());
   }
 
-  // 清理和验证字符串输入
+  // Clean and sanitize string input
   static sanitizeString(input) {
+    if (!input) return "";
     return input.trim().replace(/\s+/g, " ");
   }
 
-  // 验证分页参数
+  // Validate pagination parameters
   static validatePagination(page, limit) {
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;

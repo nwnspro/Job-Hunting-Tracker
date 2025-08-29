@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { JobApplicationController } from "../controllers/jobApplicationController.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 const jobApplicationController = new JobApplicationController();
 
-// Note: JWT auth removed, using BetterAuth instead
+// Apply authentication to all job application routes
+router.use(requireAuth);
 
 // Create job application
 router.post(
@@ -39,7 +41,7 @@ router.get(
 );
 
 // Update job application
-router.post(
+router.put(
   "/:id",
   jobApplicationController.updateJobApplication.bind(jobApplicationController)
 );

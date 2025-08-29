@@ -7,5 +7,14 @@ export const authClient = createAuthClient({
 export async function signInWithGoogle() {
   return authClient.signIn.social({
     provider: "google",
+    callbackURL: "http://localhost:5173/",
   });
+}
+
+export async function signOut() {
+  return authClient.signOut();
+}
+
+export async function getSession() {
+  return authClient.getSession();
 }
